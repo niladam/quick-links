@@ -1,68 +1,89 @@
-# :package_description
+# Quickly open resource, and other files from within filament panel in your PHPstorm editor.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-styling.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/niladam/quick-links.svg?style=flat-square)](https://packagist.org/packages/niladam/quick-links)
+[![Total Downloads](https://img.shields.io/packagist/dt/niladam/quick-links.svg?style=flat-square)](https://packagist.org/packages/niladam/quick-links)
 
-<!--delete-->
----
-This repo can be used to scaffold a Filament plugin. Follow these steps to get started:
+Quickly open resource, models, and other files from within your FilamentPHP table in your PHPstorm editor.
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Make something great!
----
-<!--/delete-->
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+> [!IMPORTANT]
+> This package uses your table's `description` field (see [docs](https://filamentphp.com/docs/3.x/tables/advanced#customizing-the-table-header)), so if there's a description already the quick links won't appear.
 
 ## Installation
 
 You can install the package via composer:
 
 ```bash
-composer require :vendor_slug/:package_slug
+composer require niladam/quick-links
 ```
 
-You can publish and run the migrations with:
+Run the install command:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
-php artisan migrate
+php artisan quick-links:install
 ```
 
-You can publish the config file with:
+## Configuration
 
-```bash
-php artisan vendor:publish --tag=":package_slug-config"
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
-```
-
-This is the contents of the published config file:
+These are the contents of the published config file:
 
 ```php
+
 return [
+    'enabled' => env('QUICK_LINKS_ENABLED', true),
+
+    /**
+     * Currently the supported links that are automatically added to your table are:
+     *
+     * resource - Opens the resource.
+     * model    - Opens the model.
+     * env      - Opens the env file.
+     */
+    'links' => [
+        'resource' => env('QUICK_LINKS_SHOW_RESOURCE', true),
+        'model' => env('QUICK_LINKS_SHOW_MODEL', true),
+        'env' => env('QUICK_LINKS_SHOW_ENV', true),
+    ],
+
+    'prefix' => env('QUICK_LINKS_PREFIX', 'Open in PHPStorm:'),
+    'separator' => env('QUICK_LINKS_SEPARATOR', ' &bull; '),
+
+    'disabled' => [
+        // Enter the full path to your resource file here if
+        // you need/want to disable it for a specific resource.
+        //
+        // Eg:
+        // \App\Filament\Resources\OrderResource::class,
+    ]
 ];
 ```
 
-## Usage
+## Conditional disabling
+
+While you can disablee the package entirely by setting the `QUICK_LINKS_ENABLED` environment variable to `false` you can also use a closure to conditionally disable it.
+
+#### Somewhere in a Service Provider..
 
 ```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
+use Niladam\QuickLinks\Facades\QuickLinks;
+
+// Disable for the user with ID 1
+QuickLinks::disableIf(fn() => auth()->id() === 1);
+
+// Disable for a specific role:
+QuickLinks::disableIf(fn() => auth()->user()->hasRole('moderator'));
 ```
 
-## Testing
+#### Disabling for a specific resource using code:
 
-```bash
-composer test
+```php
+use Niladam\QuickLinks\Facades\QuickLinks;
+
+QuickLinks::disableOn(App\Filament\Resources\OrderResource::class);
 ```
+
+#### Disabling for resource(s) using config
+
+Simply add the full path to your resource in the `quick-links.disabled` config option.
 
 ## Changelog
 
@@ -78,7 +99,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [:author_name](https://github.com/:author_username)
+- [Madalin Tache](https://github.com/niladam)
 - [All Contributors](../../contributors)
 
 ## License
