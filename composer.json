@@ -2,6 +2,7 @@
     "name": "niladam/quick-links",
     "description": "Quickly open resource, and other files from within filament resource table in your PHPstorm editor.",
     "keywords": [
+        "filament",
         "phpstorm",
         "editor",
         "quicklink",
