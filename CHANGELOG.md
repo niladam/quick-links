@@ -2,6 +2,14 @@
 
 All notable changes to `quick-links` will be documented in this file.
 
+## v1.1.1 - 2025-02-19
+
+### What's Changed
+
+* Remove the issue templates. Update composer.json by @niladam in https://github.com/niladam/quick-links/pull/4
+
+**Full Changelog**: https://github.com/niladam/quick-links/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 - 2025-02-19
 
 ### What's Changed
