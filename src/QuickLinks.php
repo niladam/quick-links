@@ -79,6 +79,52 @@ class QuickLinks
         return ! $this->isEnabled();
     }
 
+    public function buildResourceLinks(Table $table): array
+    {
+        $resourceLinks = config('quick-links.links', []);
+
+        if (empty($resourceLinks)) {
+            return [];
+        }
+
+        $availableLinks = array_filter([
+            'resource' => $table->getLivewire()->getResource(),
+            'model' => $table->getLivewire()->getModel(),
+            'env' => base_path('.env'),
+        ], fn ($key) => $resourceLinks[$key] ?? false, ARRAY_FILTER_USE_KEY);
+
+        $links = [];
+
+        foreach ($availableLinks as $path) {
+            $links[] = $this->renderLink($path);
+        }
+
+        return $links;
+    }
+
+    public function buildFileLinks(): array
+    {
+        $files = config('quick-links.files', []);
+
+        if (empty($files)) {
+            return [];
+        }
+
+        $validFiles = array_filter(
+            $files,
+            'file_exists',
+            ARRAY_FILTER_USE_KEY
+        );
+
+        $links = [];
+
+        foreach ($validFiles as $file => $title) {
+            $links[] = $this->renderLink($file, $title);
+        }
+
+        return $links;
+    }
+
     public function build(Table $table): ?HtmlString
     {
         if ($this->isDisabled()) {
@@ -89,39 +135,30 @@ class QuickLinks
             return null;
         }
 
-        $enabledLinks = config('quick-links.links', []);
-        $prefix = config('quick-links.prefix', 'Open in PHPStorm:');
-        $separator = config('quick-links.separator', ' &bull; ');
-        $links = [];
-
-        if ($enabledLinks['resource'] ?? false) {
-            $links[] = $this->renderLink($table->getLivewire()->getResource());
-        }
-
-        if ($enabledLinks['model'] ?? false) {
-            $links[] = $this->renderLink($table->getLivewire()->getModel());
-        }
-
-        if ($enabledLinks['env'] ?? false) {
-            $envFile = base_path('.env');
-            $links[] = $this->renderLink($envFile);
-        }
+        $links = [
+            ...$this->buildResourceLinks($table),
+            ...$this->buildFileLinks(),
+        ];
 
         if (empty($links)) {
             return null;
         }
 
+        $prefix = config('quick-links.prefix', 'Open in PHPStorm:');
+        $separator = config('quick-links.separator', ' &bull; ');
         $linksHtml = implode($separator, $links);
 
         return new HtmlString("{$prefix} {$linksHtml}");
     }
 
-    protected function renderLink(string $filePath): string
+    protected function renderLink(string $filePath, ?string $linkTitle = null): string
     {
         ['link' => $url, 'title' => $title] = static::link($filePath);
 
+        $title = is_null($linkTitle) ? $title : $linkTitle;
+
         return sprintf(
-            '<a href="%s" target="_blank"><strong>%s</strong></a>',
+            '<a href="%s"><strong>%s</strong></a>',
             $url,
             $title
         );
