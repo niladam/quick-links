@@ -131,6 +131,10 @@ class QuickLinks
             return null;
         }
 
+        if (! method_exists($table->getLivewire(), 'getResource')) {
+            return null;
+        }
+
         if ($this->resourceIsDisabled($table->getLivewire()->getResource())) {
             return null;
         }
