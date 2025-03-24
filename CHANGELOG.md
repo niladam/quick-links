@@ -2,6 +2,14 @@
 
 All notable changes to `quick-links` will be documented in this file.
 
+## v1.1.2 - 2025-03-24
+
+### What's Changed
+
+* Ensure we do not attempt to build it unless it's a resource by @niladam in https://github.com/niladam/quick-links/pull/5
+
+**Full Changelog**: https://github.com/niladam/quick-links/compare/v1.1.1...v1.1.2
+
 ## v1.1.1 - 2025-02-19
 
 ### What's Changed
