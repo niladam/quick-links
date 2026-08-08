@@ -2,7 +2,11 @@
 
 namespace Niladam\QuickLinks;
 
-use Filament\Tables\Table;
+use Filament\Support\Facades\FilamentView;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\View\TablesRenderHook;
+use Illuminate\Contracts\Support\Htmlable;
+use Livewire\Livewire;
 use Niladam\QuickLinks\Facades\QuickLinks;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -22,6 +26,7 @@ class QuickLinksServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package->name(static::$name)
+            ->hasViews(static::$viewNamespace)
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
                     ->publishConfigFile()
@@ -39,10 +44,25 @@ class QuickLinksServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        if (QuickLinks::isDisabled()) {
-            return;
-        }
+        /*
+         * Rendered underneath the table header rather than through
+         * ->description(), so a table that sets its own description keeps it
+         * instead of having it overwritten.
+         *
+         * The hook runs on every render, which is also what lets
+         * QuickLinks::disableIf() be evaluated per request.
+         */
+        FilamentView::registerRenderHook(
+            TablesRenderHook::HEADER_AFTER,
+            static function (): ?Htmlable {
+                $livewire = Livewire::current();
 
-        Table::configureUsing(static fn (Table $table) => $table->description(fn () => QuickLinks::build($table)));
+                if (! $livewire instanceof HasTable) {
+                    return null;
+                }
+
+                return QuickLinks::build($livewire->getTable());
+            },
+        );
     }
 }

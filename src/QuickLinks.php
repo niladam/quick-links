@@ -4,7 +4,7 @@ namespace Niladam\QuickLinks;
 
 use Closure;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
+use Illuminate\Contracts\Support\Htmlable;
 use ReflectionClass;
 
 class QuickLinks
@@ -26,16 +26,17 @@ class QuickLinks
 
         $disabledResources = config('quick-links.disabled', []);
 
-        if (in_array($resource, $disabledResources, true)) {
-            return true;
-        }
-
-        return false;
+        return in_array($resource, $disabledResources, true);
     }
 
+    /**
+     * Store the closure rather than its result, so it is evaluated once per
+     * render. Calling it here would run it while the service provider boots,
+     * before there is a request to decide against - auth() has no user yet.
+     */
     public function disableIf(Closure $closure): void
     {
-        static::$enabled = $closure();
+        static::$enabled = static fn (): bool => ! $closure();
     }
 
     /**
@@ -59,19 +60,17 @@ class QuickLinks
 
     public function isEnabled(): bool
     {
-        if (static::$enabled instanceof Closure) {
-            return static::$enabled;
-        }
-
-        if (static::$enabled === false) {
-            return false;
-        }
-
         if (! config('quick-links.enabled', true)) {
             return false;
         }
 
-        return true;
+        $enabled = static::$enabled;
+
+        if ($enabled instanceof Closure) {
+            $enabled = $enabled();
+        }
+
+        return (bool) $enabled;
     }
 
     public function isDisabled(): bool
@@ -79,6 +78,9 @@ class QuickLinks
         return ! $this->isEnabled();
     }
 
+    /**
+     * @return array<int, array{url: string, label: string}>
+     */
     public function buildResourceLinks(Table $table): array
     {
         $resourceLinks = config('quick-links.links', []);
@@ -87,21 +89,26 @@ class QuickLinks
             return [];
         }
 
+        $livewire = $table->getLivewire();
+
         $availableLinks = array_filter([
-            'resource' => $table->getLivewire()->getResource(),
-            'model' => $table->getLivewire()->getModel(),
+            'resource' => $livewire->getResource(),
+            'model' => $livewire->getModel(),
             'env' => base_path('.env'),
         ], fn ($key) => $resourceLinks[$key] ?? false, ARRAY_FILTER_USE_KEY);
 
         $links = [];
 
         foreach ($availableLinks as $path) {
-            $links[] = $this->renderLink($path);
+            $links[] = $this->toLink($path);
         }
 
         return $links;
     }
 
+    /**
+     * @return array<int, array{url: string, label: string}>
+     */
     public function buildFileLinks(): array
     {
         $files = config('quick-links.files', []);
@@ -119,52 +126,61 @@ class QuickLinks
         $links = [];
 
         foreach ($validFiles as $file => $title) {
-            $links[] = $this->renderLink($file, $title);
+            $links[] = $this->toLink($file, $title);
         }
 
         return $links;
     }
 
-    public function build(Table $table): ?HtmlString
+    /**
+     * The links for a table, or an empty array when they are switched off.
+     *
+     * @return array<int, array{url: string, label: string}>
+     */
+    public function links(Table $table): array
     {
         if ($this->isDisabled()) {
-            return null;
+            return [];
         }
 
-        if (! method_exists($table->getLivewire(), 'getResource')) {
-            return null;
+        $livewire = $table->getLivewire();
+
+        if (! method_exists($livewire, 'getResource')) {
+            return [];
         }
 
-        if ($this->resourceIsDisabled($table->getLivewire()->getResource())) {
-            return null;
+        if ($this->resourceIsDisabled($livewire->getResource())) {
+            return [];
         }
 
-        $links = [
+        return [
             ...$this->buildResourceLinks($table),
             ...$this->buildFileLinks(),
         ];
+    }
+
+    public function build(Table $table): ?Htmlable
+    {
+        $links = $this->links($table);
 
         if (empty($links)) {
             return null;
         }
 
-        $prefix = config('quick-links.prefix', 'Open in PHPStorm:');
-        $separator = config('quick-links.separator', ' &bull; ');
-        $linksHtml = implode($separator, $links);
-
-        return new HtmlString("{$prefix} {$linksHtml}");
+        return view('quick-links::quick-links', [
+            'links' => $links,
+            'prefix' => config('quick-links.prefix', 'Open in PHPStorm:'),
+            'separator' => config('quick-links.separator', ' &bull; '),
+        ]);
     }
 
-    protected function renderLink(string $filePath, ?string $linkTitle = null): string
+    /**
+     * @return array{url: string, label: string}
+     */
+    protected function toLink(string $filePath, ?string $linkTitle = null): array
     {
-        ['link' => $url, 'title' => $title] = static::link($filePath);
+        ['link' => $url, 'title' => $title] = $this->link($filePath);
 
-        $title = is_null($linkTitle) ? $title : $linkTitle;
-
-        return sprintf(
-            '<a href="%s"><strong>%s</strong></a>',
-            $url,
-            $title
-        );
+        return ['url' => $url, 'label' => $linkTitle ?? $title];
     }
 }
