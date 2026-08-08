@@ -28,7 +28,9 @@ inversion.
 ### Links no longer use the table description
 
 They render through Filament's `tables::header.after` render hook, so a table
-that sets its own `description()` keeps it.
+that sets its own `description()` keeps it. Contributed by
+[@grafst](https://github.com/grafst) in
+[#18](https://github.com/niladam/quick-links/pull/18).
 
 One consequence: that hook sits inside the table's header container, which
 Filament hides when a table has nothing else to show there. A table with no

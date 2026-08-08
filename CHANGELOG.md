@@ -6,7 +6,9 @@ All notable changes to `quick-links` will be documented in this file.
 
 ### What's Changed
 
-Adds Filament v4 and v5 support, and moves rendering off the table description onto a render hook so tables that set their own description keep it. See [UPGRADING.md](https://github.com/niladam/quick-links/blob/main/UPGRADING.md).
+Adds Filament v4 and v5 support, alongside v3. Quick links also no longer overwrite a table's own description, thanks to [@grafst](https://github.com/grafst). See [UPGRADING.md](https://github.com/niladam/quick-links/blob/main/UPGRADING.md).
+
+* Render links via table header hook so existing descriptions are kept by @grafst in https://github.com/niladam/quick-links/pull/18
 
 #### Breaking
 
@@ -34,6 +36,10 @@ Adds Filament v4 and v5 support, and moves rendering off the table description o
 #### Known limitation
 
 * The render hook sits inside the table header container, which Filament hides when a table has no heading, description, header actions, search, filters or column manager. Links will not appear on such a table
+
+### New Contributors
+
+* @grafst made their first contribution in https://github.com/niladam/quick-links/pull/18
 
 **Full Changelog**: https://github.com/niladam/quick-links/compare/v1.1.2...v2.0.0
 

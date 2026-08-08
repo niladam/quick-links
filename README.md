@@ -143,6 +143,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 ## Credits
 
 - [Madalin Tache](https://github.com/niladam)
+- [grafst](https://github.com/grafst) - for rendering the links through a header render hook, so existing table descriptions are kept
 - [All Contributors](../../contributors)
 
 ## License
