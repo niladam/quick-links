@@ -6,9 +6,10 @@ All notable changes to `quick-links` will be documented in this file.
 
 ### What's Changed
 
-Adds Filament v4 and v5 support, alongside v3. Quick links also no longer overwrite a table's own description, thanks to [@grafst](https://github.com/grafst). See [UPGRADING.md](https://github.com/niladam/quick-links/blob/main/UPGRADING.md).
-
+* Adds Filament v4 and v5 support, alongside v3
 * Render links via table header hook so existing descriptions are kept by @grafst in https://github.com/niladam/quick-links/pull/18
+
+See [UPGRADING.md](https://github.com/niladam/quick-links/blob/main/UPGRADING.md) for what to change when upgrading from v1.
 
 #### Breaking
 
