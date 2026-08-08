@@ -2,7 +2,10 @@
 
 namespace Niladam\QuickLinks;
 
-use Filament\Tables\Table;
+use Filament\Support\Facades\FilamentView;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\View\TablesRenderHook;
+use Livewire\Livewire;
 use Niladam\QuickLinks\Facades\QuickLinks;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -39,10 +42,29 @@ class QuickLinksServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        if (QuickLinks::isDisabled()) {
-            return;
-        }
+        // Rendered below the table header instead of via ->description(), so
+        // tables that define their own description keep it — the quick links
+        // are appended rather than silently dropped. The enabled check runs
+        // per render, so runtime config changes are respected.
+        FilamentView::registerRenderHook(
+            TablesRenderHook::HEADER_AFTER,
+            static function (): ?string {
+                if (QuickLinks::isDisabled()) {
+                    return null;
+                }
 
-        Table::configureUsing(static fn (Table $table) => $table->description(fn () => QuickLinks::build($table)));
+                $component = Livewire::current();
+
+                if (! $component instanceof HasTable) {
+                    return null;
+                }
+
+                $links = QuickLinks::build($component->getTable());
+
+                return $links
+                    ? '<div class="quick-links" style="padding: 0.5rem 1rem; font-size: 0.75rem; color: #71717a;">'.$links.'</div>'
+                    : null;
+            },
+        );
     }
 }
