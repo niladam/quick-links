@@ -130,6 +130,8 @@ The suite runs against Filament v3, v4 and v5.
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
+Upgrading from v1? See [UPGRADING](UPGRADING.md).
+
 ## Contributing
 
 Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
