@@ -5,8 +5,10 @@
 
 Quickly open resource, models, and other files from within your FilamentPHP table in your PHPstorm editor.
 
-> [!IMPORTANT]
-> This package uses your table's `description` field (see [docs](https://filamentphp.com/docs/3.x/tables/advanced#customizing-the-table-header)), so if there's a description already the quick links won't appear.
+> [!NOTE]
+> The links are rendered through Filament's `tables::header.after` render hook, underneath the table header, so a table that already sets its own `description` keeps it.
+>
+> That spot lives inside the table's header container, which Filament hides when a table has nothing to put in it. A table with no heading, no description, no header actions, no search, no filters and no column manager therefore won't show the links.
 
 ## Installation
 
@@ -78,6 +80,16 @@ return [
 ];
 ```
 
+## Styling
+
+The links are rendered from a Blade view. Publish it if you want to change the markup:
+
+```bash
+php artisan vendor:publish --tag=quick-links-views
+```
+
+It lands in `resources/views/vendor/quick-links/quick-links.blade.php` and receives `$links` (each with a `url` and a `label`), `$prefix` and `$separator`.
+
 ## Conditional disabling
 
 While you can disablee the package entirely by setting the `QUICK_LINKS_ENABLED` environment variable to `false` you can also use a closure to conditionally disable it.
@@ -105,6 +117,14 @@ QuickLinks::disableOn(App\Filament\Resources\OrderResource::class);
 #### Disabling quicklinks on a specific resource(s) using config
 
 Simply add the FQCN(s) (fully qualified class name) to your resource in the `quick-links.disabled` config option.
+
+## Testing
+
+```bash
+composer test
+```
+
+The suite runs against Filament v3, v4 and v5.
 
 ## Changelog
 

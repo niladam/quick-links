@@ -5,6 +5,7 @@ namespace Niladam\QuickLinks;
 use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\View\TablesRenderHook;
+use Illuminate\Contracts\Support\Htmlable;
 use Livewire\Livewire;
 use Niladam\QuickLinks\Facades\QuickLinks;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
@@ -25,6 +26,7 @@ class QuickLinksServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package->name(static::$name)
+            ->hasViews(static::$viewNamespace)
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
                     ->publishConfigFile()
@@ -42,28 +44,24 @@ class QuickLinksServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // Rendered below the table header instead of via ->description(), so
-        // tables that define their own description keep it — the quick links
-        // are appended rather than silently dropped. The enabled check runs
-        // per render, so runtime config changes are respected.
+        /*
+         * Rendered underneath the table header rather than through
+         * ->description(), so a table that sets its own description keeps it
+         * instead of having it overwritten.
+         *
+         * The hook runs on every render, which is also what lets
+         * QuickLinks::disableIf() be evaluated per request.
+         */
         FilamentView::registerRenderHook(
             TablesRenderHook::HEADER_AFTER,
-            static function (): ?string {
-                if (QuickLinks::isDisabled()) {
+            static function (): ?Htmlable {
+                $livewire = Livewire::current();
+
+                if (! $livewire instanceof HasTable) {
                     return null;
                 }
 
-                $component = Livewire::current();
-
-                if (! $component instanceof HasTable) {
-                    return null;
-                }
-
-                $links = QuickLinks::build($component->getTable());
-
-                return $links
-                    ? '<div class="quick-links" style="padding: 0.5rem 1rem; font-size: 0.75rem; color: #71717a;">'.$links.'</div>'
-                    : null;
+                return QuickLinks::build($livewire->getTable());
             },
         );
     }
